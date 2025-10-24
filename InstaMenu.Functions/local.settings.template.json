@@ -1,0 +1,22 @@
+{
+    "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "DB_HOST": "your-database-host",
+    "DB_PORT": "5432",
+    "DB_NAME": "your-database-name",
+    "DB_USERNAME": "your-database-username",
+    "DB_PASSWORD": "your-database-password",
+
+    "TWILIO_ACCOUNT_SID": "your-twilio-account-sid",
+    "TWILIO_AUTH_TOKEN": "your-twilio-auth-token",
+    "TWILIO_FROM_NUMBER": "whatsapp:+14155238886",
+
+    "JWT_SECRET": "your-jwt-secret-key-base64",
+    "JWT_ISSUER": "InstaMenu",
+    "JWT_AUDIENCE": "InstaMenuClient",
+    "JWT_EXPIRES_DAYS": "7"
+  }
+}

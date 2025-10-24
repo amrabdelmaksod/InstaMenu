@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Auth\DTOs\" />
+    <Folder Include="Auth\Queries\" />
+    <Folder Include="Categories\DTOs\" />
+    <Folder Include="Categories\Queries\" />
+    <Folder Include="MenuItems\DTOs\" />
+    <Folder Include="MenuItems\Queries\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="13.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\InstaMenu.Domain\InstaMenu.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
