@@ -1,4 +1,5 @@
 ﻿using InstaMenu.Application.MenuItems.Commands;
+using InstaMenu.Application.Common.Results;
 using InstaMenuFunctions.DTOs;
 using MediatR;
 using Microsoft.Azure.Functions.Worker;
@@ -22,28 +23,38 @@ namespace InstaMenuFunctions.Functions
         [OpenApiOperation(operationId: "CreateMenuItem", tags: new[] { "Menu Items" }, Summary = "Create a new menu item", Description = "Creates a new menu item for a specific category")]
         [OpenApiRequestBody("application/json", typeof(CreateMenuItemRequest), Description = "Menu item details", Required = true)]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.Created, contentType: "application/json", bodyType: typeof(CreateMenuItemResponse), Description = "Menu item created successfully")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "text/plain", bodyType: typeof(string), Description = "Invalid item data")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "text/plain", bodyType: typeof(string), Description = "Authentication required")]
-        public async Task<HttpResponseData> Run(
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(object), Description = "Invalid item data")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "application/json", bodyType: typeof(object), Description = "Authentication required")]
+        public async Task<Result<CreateMenuItemResponse>> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "menu-items")] HttpRequestData req,
             FunctionContext executionContext)
         {
             var command = await req.ReadFromJsonAsync<CreateMenuItemCommand>();
-            var response = req.CreateResponse();
 
-            if (command == null || string.IsNullOrWhiteSpace(command.Name) || command.Price <= 0)
+            if (command == null)
             {
-                response.StatusCode = HttpStatusCode.BadRequest;
-                await response.WriteStringAsync("Invalid item data");
-                return response;
+                return Result<CreateMenuItemResponse>.Failure(ResultErrors.BadRequest.InvalidData());
             }
 
-            var newItemId = await _mediator.Send(command);
+            if (string.IsNullOrWhiteSpace(command.Name))
+            {
+                return Result<CreateMenuItemResponse>.Failure(ResultErrors.BadRequest.MissingRequiredFields("Name"));
+            }
 
-            response.StatusCode = HttpStatusCode.Created;
-            await response.WriteAsJsonAsync(new CreateMenuItemResponse { Id = newItemId });
+            if (command.Price <= 0)
+            {
+                return Result<CreateMenuItemResponse>.Failure(ResultErrors.Validation.InvalidPrice(command.Price));
+            }
 
-            return response;
+            var result = await _mediator.Send(command);
+
+            if (result.IsFailure)
+            {
+                return Result<CreateMenuItemResponse>.Failure(result.Error);
+            }
+
+            var response = new CreateMenuItemResponse { Id = result.Value };
+            return Result.Success(response);
         }
     }
 }

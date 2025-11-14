@@ -1,17 +1,18 @@
 using InstaMenu.Application.Interfaces;
+using InstaMenu.Application.Common.Results;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace InstaMenu.Application.Merchants.Commands
 {
-    public class UpdateMerchantAboutCommand : IRequest<bool>
+    public class UpdateMerchantAboutCommand : IRequest<Result>
     {
         public Guid MerchantId { get; set; }
         public string? AboutUs { get; set; }
         public string? AboutUsAr { get; set; }
     }
 
-    public class UpdateMerchantAboutCommandHandler : IRequestHandler<UpdateMerchantAboutCommand, bool>
+    public class UpdateMerchantAboutCommandHandler : IRequestHandler<UpdateMerchantAboutCommand, Result>
     {
         private readonly IInstaMenuDbContext _context;
 
@@ -20,20 +21,30 @@ namespace InstaMenu.Application.Merchants.Commands
             _context = context;
         }
 
-        public async Task<bool> Handle(UpdateMerchantAboutCommand request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(UpdateMerchantAboutCommand request, CancellationToken cancellationToken)
         {
-            var settings = await _context.MerchantSettings
-                .FirstOrDefaultAsync(s => s.MerchantId == request.MerchantId, cancellationToken);
+            try
+            {
+                var settings = await _context.MerchantSettings
+                    .FirstOrDefaultAsync(s => s.MerchantId == request.MerchantId, cancellationToken);
 
-            if (settings == null)
-                return false;
+                if (settings == null)
+                    return Result.Failure(ResultErrors.NotFound.MerchantSettings(request.MerchantId));
 
-            settings.AboutUs = request.AboutUs;
-            settings.AboutUsAr = request.AboutUsAr;
-            settings.UpdatedAt = DateTime.UtcNow;
+                settings.AboutUs = request.AboutUs;
+                settings.AboutUsAr = request.AboutUsAr;
+                settings.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync(cancellationToken);
-            return true;
+                await _context.SaveChangesAsync(cancellationToken);
+
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                // In production, you should log the exception details
+                // _logger.LogError(ex, "Error updating merchant about information for {MerchantId}", request.MerchantId);
+                return Result.Failure(ResultErrors.Server.DatabaseError());
+            }
         }
     }
 }

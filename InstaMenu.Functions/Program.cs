@@ -20,6 +20,8 @@ builder.ConfigureFunctionsWorkerDefaults(workerBuilder =>
     workerBuilder.UseMiddleware<InstaMenuFunctions.Middlewares.CorsMiddleware>();
     // Add your JWT middleware
     workerBuilder.UseMiddleware<InstaMenuFunctions.Middlewares.JwtMiddleware>();
+    // Add Result handling middleware (should be last to catch all results)
+    workerBuilder.UseMiddleware<InstaMenuFunctions.Middlewares.ResultHandlingMiddleware>();
 });
 
 // Configure services

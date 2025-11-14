@@ -3,6 +3,8 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Functions.Worker;
 using System.Net;
 using InstaMenu.Application.Orders.Commands;
+using InstaMenu.Application.Common.Results;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 
 public class CreateOrderFunction
 {
@@ -14,30 +16,22 @@ public class CreateOrderFunction
     }
 
     [Function("CreateOrder")]
-    public async Task<HttpResponseData> Run(
+    [OpenApiOperation(operationId: "CreateOrder", tags: new[] { "Orders" }, Summary = "Create new order", Description = "Creates a new order for a merchant")]
+    [OpenApiRequestBody("application/json", typeof(CreateOrderCommand), Description = "Order details", Required = true)]
+    [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(CreateOrderResult), Description = "Order created successfully")]
+    [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(object), Description = "Invalid request data")]
+    [OpenApiResponseWithBody(statusCode: HttpStatusCode.NotFound, contentType: "application/json", bodyType: typeof(object), Description = "Merchant or items not found")]
+    public async Task<Result<CreateOrderResult>> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "orders")] HttpRequestData req,
         FunctionContext executionContext)
     {
         var command = await req.ReadFromJsonAsync<CreateOrderCommand>();
+        
         if (command == null)
         {
-            var badReq = req.CreateResponse(HttpStatusCode.BadRequest);
-            await badReq.WriteStringAsync("Invalid body");
-            return badReq;
+            return Result<CreateOrderResult>.Failure(ResultErrors.BadRequest.InvalidData());
         }
 
-        try
-        {
-            var result = await _mediator.Send(command);
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(result);
-            return response;
-        }
-        catch (Exception ex)
-        {
-            var errorRes = req.CreateResponse(HttpStatusCode.BadRequest);
-            await errorRes.WriteStringAsync(ex.Message);
-            return errorRes;
-        }
+        return await _mediator.Send(command);
     }
 }

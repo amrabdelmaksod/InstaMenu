@@ -1,4 +1,5 @@
 ﻿using InstaMenu.Application.Categories.Commands;
+using InstaMenu.Application.Common.Results;
 using InstaMenuFunctions.DTOs;
 using MediatR;
 using Microsoft.Azure.Functions.Worker;
@@ -23,30 +24,34 @@ namespace InstaMenuFunctions.Functions
         [OpenApiParameter(name: "id", In = ParameterLocation.Path, Required = true, Type = typeof(Guid), Description = "The category ID to update")]
         [OpenApiRequestBody("application/json", typeof(UpdateCategoryRequest), Description = "Updated category details", Required = true)]
         [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.OK, Description = "Category updated successfully")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "text/plain", bodyType: typeof(string), Description = "Invalid category data")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(object), Description = "Invalid category data")]
         [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "Category not found")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "text/plain", bodyType: typeof(string), Description = "Authentication required")]
-        public async Task<HttpResponseData> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "categories/{id}")] HttpRequestData req,
-            Guid id,
-            FunctionContext executionContext)
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "application/json", bodyType: typeof(object), Description = "Authentication required")]
+        public async Task<Result> Run(
+          [HttpTrigger(AuthorizationLevel.Anonymous, "patch", Route = "categories/{id}")] HttpRequestData req,
+     Guid id,
+ FunctionContext executionContext)
         {
-            var command = await req.ReadFromJsonAsync<UpdateCategoryCommand>();
-            var response = req.CreateResponse();
+            var request = await req.ReadFromJsonAsync<UpdateCategoryRequest>();
 
-            if (command == null || string.IsNullOrWhiteSpace(command.Name))
+            if (request == null)
             {
-                response.StatusCode = HttpStatusCode.BadRequest;
-                await response.WriteStringAsync("Invalid category data");
-                return response;
+                return Result.Failure(ResultErrors.BadRequest.InvalidData());
             }
 
-            command.CategoryId = id;
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return Result.Failure(ResultErrors.BadRequest.MissingRequiredFields("Name"));
+            }
 
-            var success = await _mediator.Send(command);
+            var command = new UpdateCategoryCommand
+            {
+                CategoryId = id,
+                Name = request.Name,
+                SortOrder = request.SortOrder
+            };
 
-            response.StatusCode = success ? HttpStatusCode.OK : HttpStatusCode.NotFound;
-            return response;
+            return await _mediator.Send(command);
         }
     }
 }

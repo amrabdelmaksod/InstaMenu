@@ -22,4 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\InstaMenu.Infrastructure\InstaMenu.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
 </Project>

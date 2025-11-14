@@ -1,4 +1,5 @@
 ﻿using InstaMenu.Application.Categories.Commands;
+using InstaMenu.Application.Common.Results;
 using InstaMenuFunctions.DTOs;
 using MediatR;
 using Microsoft.Azure.Functions.Worker;
@@ -22,28 +23,33 @@ namespace InstaMenuFunctions.Functions
         [OpenApiOperation(operationId: "CreateCategory", tags: new[] { "Categories" }, Summary = "Create a new category", Description = "Creates a new menu category for a merchant")]
         [OpenApiRequestBody("application/json", typeof(CreateCategoryRequest), Description = "Category details", Required = true)]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.Created, contentType: "application/json", bodyType: typeof(CreateCategoryResponse), Description = "Category created successfully")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "text/plain", bodyType: typeof(string), Description = "Invalid category data")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "text/plain", bodyType: typeof(string), Description = "Authentication required")]
-        public async Task<HttpResponseData> Run(
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(object), Description = "Invalid category data")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "application/json", bodyType: typeof(object), Description = "Authentication required")]
+        public async Task<Result<CreateCategoryResponse>> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "categories")] HttpRequestData req,
             FunctionContext executionContext)
         {
             var command = await req.ReadFromJsonAsync<CreateCategoryCommand>();
-            var response = req.CreateResponse();
 
-            if (command == null || string.IsNullOrWhiteSpace(command.Name))
+            if (command == null)
             {
-                response.StatusCode = HttpStatusCode.BadRequest;
-                await response.WriteStringAsync("Invalid category data");
-                return response;
+                return Result<CreateCategoryResponse>.Failure(ResultErrors.BadRequest.InvalidData());
             }
 
-            var newCategoryId = await _mediator.Send(command);
+            if (string.IsNullOrWhiteSpace(command.Name))
+            {
+                return Result<CreateCategoryResponse>.Failure(ResultErrors.BadRequest.MissingRequiredFields("Name"));
+            }
 
-            response.StatusCode = HttpStatusCode.Created;
-            await response.WriteAsJsonAsync(new CreateCategoryResponse { Id = newCategoryId });
+            var result = await _mediator.Send(command);
 
-            return response;
+            if (result.IsFailure)
+            {
+                return Result<CreateCategoryResponse>.Failure(result.Error);
+            }
+
+            var response = new CreateCategoryResponse { Id = result.Value };
+            return Result.Success(response);
         }
     }
 }

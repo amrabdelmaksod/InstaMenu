@@ -11,6 +11,7 @@ namespace InstaMenuFunctions.DTOs
 
     public class RegisterMerchantResponse
     {
+        public Guid MerchantId { get; set; }
         public string Token { get; set; } = null!;
     }
 
@@ -22,7 +23,9 @@ namespace InstaMenuFunctions.DTOs
 
     public class LoginMerchantResponse
     {
+        public Guid MerchantId { get; set; }
         public string Token { get; set; } = null!;
+        public string Name { get; set; } = null!;
     }
 
     public class CreateCategoryRequest

@@ -1,4 +1,5 @@
 using InstaMenu.Application.Merchants.Commands;
+using InstaMenu.Application.Common.Results;
 using InstaMenuFunctions.DTOs;
 using MediatR;
 using Microsoft.Azure.Functions.Worker;
@@ -19,32 +20,29 @@ namespace InstaMenuFunctions.Functions
         }
 
         [Function("UpdateMerchantAbout")]
-        [OpenApiOperation(operationId: "UpdateMerchantAbout", tags: new[] { "Merchant Settings" }, 
-            Summary = "Update merchant about section", 
-            Description = "Updates merchant about us information in both languages")]
-        [OpenApiParameter(name: "merchantId", In = ParameterLocation.Path, Required = true, 
-            Type = typeof(Guid), Description = "The merchant ID to update")]
-        [OpenApiRequestBody("application/json", typeof(UpdateMerchantAboutRequest), 
-            Description = "Updated about us information", Required = true)]
+        [OpenApiOperation(operationId: "UpdateMerchantAbout", tags: new[] { "Merchant Settings" },
+              Summary = "Update merchant about section",
+               Description = "Updates merchant about us information in both languages")]
+        [OpenApiParameter(name: "merchantId", In = ParameterLocation.Path, Required = true,
+                 Type = typeof(Guid), Description = "The merchant ID to update")]
+        [OpenApiRequestBody("application/json", typeof(UpdateMerchantAboutRequest),
+     Description = "Updated about us information", Required = true)]
         [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.OK, Description = "About section updated successfully")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "text/plain", 
-            bodyType: typeof(string), Description = "Invalid request data")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json",
+     bodyType: typeof(object), Description = "Invalid request data")]
         [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "Merchant settings not found")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "text/plain", 
-            bodyType: typeof(string), Description = "Authentication required")]
-        public async Task<HttpResponseData> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "merchants/{merchantId}/about")] HttpRequestData req,
-            Guid merchantId,
-            FunctionContext executionContext)
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "application/json",
+          bodyType: typeof(object), Description = "Authentication required")]
+        public async Task<Result> Run(
+         [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "merchants/{merchantId}/about")] HttpRequestData req,
+              Guid merchantId,
+         FunctionContext executionContext)
         {
             var request = await req.ReadFromJsonAsync<UpdateMerchantAboutRequest>();
-            var response = req.CreateResponse();
 
             if (request == null)
             {
-                response.StatusCode = HttpStatusCode.BadRequest;
-                await response.WriteStringAsync("Invalid about data");
-                return response;
+                return Result.Failure(ResultErrors.BadRequest.InvalidData("Request body is null or invalid"));
             }
 
             var command = new UpdateMerchantAboutCommand
@@ -54,10 +52,7 @@ namespace InstaMenuFunctions.Functions
                 AboutUsAr = request.AboutUsAr
             };
 
-            var success = await _mediator.Send(command);
-
-            response.StatusCode = success ? HttpStatusCode.OK : HttpStatusCode.NotFound;
-            return response;
+            return await _mediator.Send(command);
         }
     }
 }
