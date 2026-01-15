@@ -14,15 +14,9 @@ namespace InstaMenu.Infrastructure.Services
 
         public TwilioWhatsAppService(IConfiguration config)
         {
-            _accountSid = Environment.GetEnvironmentVariable("TWILIO_ACCOUNT_SID") 
-                ?? throw new InvalidOperationException("TWILIO_ACCOUNT_SID environment variable is required");
-            
-            _authToken = Environment.GetEnvironmentVariable("TWILIO_AUTH_TOKEN") 
-                ?? throw new InvalidOperationException("TWILIO_AUTH_TOKEN environment variable is required");
-            
-            _fromNumber = Environment.GetEnvironmentVariable("TWILIO_FROM_NUMBER") 
-                ?? "whatsapp:+14155238886"; // Default sandbox number
-            
+            _accountSid = config["Twilio:AccountSid"] ?? throw new ArgumentNullException("Twilio:AccountSid");
+            _authToken = config["Twilio:AuthToken"] ?? throw new ArgumentNullException("Twilio:AuthToken");
+            _fromNumber = config["Twilio:FromNumber"] ?? "whatsapp:+14155238886";
             TwilioClient.Init(_accountSid, _authToken);
         }
 

@@ -14,6 +14,7 @@ namespace InstaMenu.Infrastructure.Presistence
         public DbSet<Merchant> Merchants => Set<Merchant>();
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+        public DbSet<MenuItemSize> MenuItemSizes => Set<MenuItemSize>();
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<MerchantSocialLink> MerchantSocialLinks => Set<MerchantSocialLink>();
         public DbSet<BusinessHour> BusinessHours => Set<BusinessHour>();

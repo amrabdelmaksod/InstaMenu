@@ -1,5 +1,4 @@
 ﻿using InstaMenu.Application.Auth.Commands;
-using InstaMenu.Application.Common.Results;
 using InstaMenuFunctions.DTOs;
 using MediatR;
 using Microsoft.Azure.Functions.Worker;
@@ -21,33 +20,32 @@ public class LoginMerchantFunction
     [OpenApiOperation(operationId: "LoginMerchant", tags: new[] { "Authentication" }, Summary = "Login merchant", Description = "Authenticates a merchant and returns an authentication token")]
     [OpenApiRequestBody("application/json", typeof(LoginMerchantRequest), Description = "Merchant login credentials", Required = true)]
     [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(LoginMerchantResponse), Description = "Login successful")]
-    [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(object), Description = "Invalid request")]
-    [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "application/json", bodyType: typeof(object), Description = "Invalid credentials")]
-    public async Task<Result<LoginMerchantResponse>> Run(
+    [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "text/plain", bodyType: typeof(string), Description = "Invalid request")]
+    [OpenApiResponseWithBody(statusCode: HttpStatusCode.Unauthorized, contentType: "text/plain", bodyType: typeof(string), Description = "Invalid credentials")]
+    public async Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post", "options", Route = "auth/login")] HttpRequestData req,
         FunctionContext ctx)
     {
         var command = await req.ReadFromJsonAsync<LoginMerchantCommand>();
+        var response = req.CreateResponse();
 
         if (command == null)
         {
-            return Result<LoginMerchantResponse>.Failure(ResultErrors.BadRequest.InvalidData());
+            response.StatusCode = HttpStatusCode.BadRequest;
+            await response.WriteStringAsync("Invalid request");
+            return response;
         }
 
-        var result = await _mediator.Send(command);
+        var token = await _mediator.Send(command);
 
-        if (result.IsFailure)
+        if (token == null)
         {
-            return Result<LoginMerchantResponse>.Failure(result.Error);
+            response.StatusCode = HttpStatusCode.Unauthorized;
+            await response.WriteStringAsync("Invalid credentials");
+            return response;
         }
 
-        var response = new LoginMerchantResponse
-        {
-            Token = result.Value!.Token,
-            MerchantId = result.Value.MerchantId,
-            Name = result.Value.Name
-        };
-
-        return Result.Success(response);
+        await response.WriteAsJsonAsync(new LoginMerchantResponse { Token = token });
+        return response;
     }
 }

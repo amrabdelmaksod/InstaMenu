@@ -1,0 +1,7 @@
+<!-- Custom Azure Functions .NET 10 Support -->
+<Project>
+  <PropertyGroup>
+    <!-- Add .NET 10.0 support to Azure Functions v4 -->
+    <_ToolingSuffix Condition="$(AzureFunctionsVersion.StartsWith('v4',StringComparison.OrdinalIgnoreCase)) And '$(TargetFrameworkIdentifier)' == '.NETCoreApp' And '$(TargetFrameworkVersion)' == 'v10.0'">net9-isolated</_ToolingSuffix>
+  </PropertyGroup>
+</Project>

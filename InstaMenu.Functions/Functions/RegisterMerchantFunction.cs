@@ -1,5 +1,4 @@
 ﻿using InstaMenu.Application.Auth.Commands;
-using InstaMenu.Application.Common.Results;
 using InstaMenuFunctions.DTOs;
 using MediatR;
 using Microsoft.Azure.Functions.Worker;
@@ -7,6 +6,8 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.OpenApi.Models;
 using System.Net;
+using System;
+using System.Threading.Tasks;
 
 namespace InstaMenuFunctions.Functions
 {
@@ -23,53 +24,38 @@ namespace InstaMenuFunctions.Functions
         [OpenApiOperation(operationId: "RegisterMerchant", tags: new[] { "Authentication" }, Summary = "Register a new merchant", Description = "Creates a new merchant account and returns an authentication token")]
         [OpenApiRequestBody("application/json", typeof(RegisterMerchantRequest), Description = "Merchant registration details", Required = true)]
         [OpenApiResponseWithBody(statusCode: HttpStatusCode.Created, contentType: "application/json", bodyType: typeof(RegisterMerchantResponse), Description = "Merchant registered successfully")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "application/json", bodyType: typeof(object), Description = "Invalid registration data")]
-        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Conflict, contentType: "application/json", bodyType: typeof(object), Description = "Phone number or slug already exists")]
-        public async Task<Result<RegisterMerchantResponse>> Run(
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: "text/plain", bodyType: typeof(string), Description = "Invalid registration data")]
+        [OpenApiResponseWithBody(statusCode: HttpStatusCode.Conflict, contentType: "text/plain", bodyType: typeof(string), Description = "Phone number or slug already exists")]
+        public async Task<HttpResponseData> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", "options", Route = "auth/register")] HttpRequestData req,
-      FunctionContext ctx)
+            FunctionContext ctx)
         {
+            // Handle actual POST request
             var command = await req.ReadFromJsonAsync<RegisterMerchantCommand>();
+            var response = req.CreateResponse();
 
-      if (command == null)
+            if (command == null || string.IsNullOrWhiteSpace(command.PhoneNumber) || string.IsNullOrWhiteSpace(command.Password))
             {
-        return Result<RegisterMerchantResponse>.Failure(ResultErrors.BadRequest.InvalidData());
-     }
-
-          if (string.IsNullOrWhiteSpace(command.PhoneNumber))
-            {
-return Result<RegisterMerchantResponse>.Failure(ResultErrors.BadRequest.MissingRequiredFields("PhoneNumber"));
+                response.StatusCode = HttpStatusCode.BadRequest;
+                await response.WriteStringAsync("Invalid registration data");
+                return response;
             }
 
-            if (string.IsNullOrWhiteSpace(command.Password))
-        {
-         return Result<RegisterMerchantResponse>.Failure(ResultErrors.BadRequest.MissingRequiredFields("Password"));
-          }
-
-            if (string.IsNullOrWhiteSpace(command.Name))
-      {
-  return Result<RegisterMerchantResponse>.Failure(ResultErrors.BadRequest.MissingRequiredFields("Name"));
-   }
-
-    if (string.IsNullOrWhiteSpace(command.Slug))
+            try
             {
-                return Result<RegisterMerchantResponse>.Failure(ResultErrors.BadRequest.MissingRequiredFields("Slug"));
-         }
+                var result = await _mediator.Send(command);
 
-          var result = await _mediator.Send(command);
+                response.StatusCode = HttpStatusCode.Created;
+                await response.WriteAsJsonAsync(new RegisterMerchantResponse { Token = result.Token });
 
-         if (result.IsFailure)
-   {
-          return Result<RegisterMerchantResponse>.Failure(result.Error);
+                return response;
             }
-
-            var response = new RegisterMerchantResponse 
-            { 
-   MerchantId = result.Value!.MerchantId,
-      Token = result.Value.Token 
-            };
-
-            return Result.Success(response);
+            catch (Exception ex)
+            {
+                response.StatusCode = HttpStatusCode.Conflict;
+                await response.WriteStringAsync(ex.Message);
+                return response;
+            }
         }
     }
 }

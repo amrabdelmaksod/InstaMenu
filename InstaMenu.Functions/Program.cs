@@ -10,6 +10,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Azure.Functions.Worker.Extensions.OpenApi.Extensions;
 
+var connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
+
 // Create a host builder for Azure Functions
 var builder = new HostBuilder();
 
@@ -20,8 +22,6 @@ builder.ConfigureFunctionsWorkerDefaults(workerBuilder =>
     workerBuilder.UseMiddleware<InstaMenuFunctions.Middlewares.CorsMiddleware>();
     // Add your JWT middleware
     workerBuilder.UseMiddleware<InstaMenuFunctions.Middlewares.JwtMiddleware>();
-    // Add Result handling middleware (should be last to catch all results)
-    workerBuilder.UseMiddleware<InstaMenuFunctions.Middlewares.ResultHandlingMiddleware>();
 });
 
 // Configure services
@@ -31,15 +31,9 @@ builder.ConfigureServices(services =>
     services.AddApplicationInsightsTelemetryWorkerService();
     services.ConfigureFunctionsApplicationInsights();
 
-    // Database - Build connection string from environment variables
-    var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
-    var dbPort = Environment.GetEnvironmentVariable("DB_PORT");
-    var dbName = Environment.GetEnvironmentVariable("DB_NAME");
-    var dbUsername = Environment.GetEnvironmentVariable("DB_USERNAME");
-    var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
-    
-    var connectionString = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUsername};Password={dbPassword};SSL Mode=Require;Trust Server Certificate=true;";
-    
+    // Database
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     services.AddDbContext<InstaMenuDbContext>(options =>
         options.UseNpgsql(connectionString));
 

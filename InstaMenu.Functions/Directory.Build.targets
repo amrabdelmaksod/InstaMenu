@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Add .NET 10 support to Azure Functions SDK -->
+    <_ToolingSuffix Condition="$(AzureFunctionsVersion.StartsWith('v4',StringComparison.OrdinalIgnoreCase)) And '$(TargetFrameworkIdentifier)' == '.NETCoreApp' And '$(TargetFrameworkVersion)' == 'v10.0'">net10-isolated</_ToolingSuffix>
+    <FunctionsToolingSuffix Condition="'$(TargetFramework)' == 'net10.0'">net10-isolated</FunctionsToolingSuffix>
+  </PropertyGroup>
+</Project>

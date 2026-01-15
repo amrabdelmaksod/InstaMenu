@@ -1,13 +1,12 @@
 ﻿using InstaMenu.Application.Helpers;
 using InstaMenu.Application.Interfaces;
-using InstaMenu.Application.Common.Results;
 using InstaMenu.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace InstaMenu.Application.Auth.Commands
 {
-    public class RegisterMerchantCommand : IRequest<Result<RegisterMerchantResult>>
+    public class RegisterMerchantCommand : IRequest<RegisterMerchantResult>
     {
         public string Name { get; set; } = null!;
         public string PhoneNumber { get; set; } = null!;
@@ -16,7 +15,8 @@ namespace InstaMenu.Application.Auth.Commands
         public string? LogoUrl { get; set; }
     }
 
-    public class RegisterMerchantCommandHandler : IRequestHandler<RegisterMerchantCommand, Result<RegisterMerchantResult>>
+
+    public class RegisterMerchantCommandHandler : IRequestHandler<RegisterMerchantCommand, RegisterMerchantResult>
     {
         private readonly IInstaMenuDbContext _context;
         private readonly IJwtTokenGenerator _jwt;
@@ -27,56 +27,35 @@ namespace InstaMenu.Application.Auth.Commands
             _jwt = jwt;
         }
 
-        public async Task<Result<RegisterMerchantResult>> Handle(RegisterMerchantCommand request, CancellationToken cancellationToken)
+        public async Task<RegisterMerchantResult> Handle(RegisterMerchantCommand request, CancellationToken cancellationToken)
         {
-            try
+            var exists = await _context.Merchants
+                .AnyAsync(m => m.PhoneNumber == request.PhoneNumber || m.Slug == request.Slug, cancellationToken);
+
+            if (exists)
+                throw new Exception("Phone number or slug already exists");
+
+            var merchant = new Merchant
             {
-                // Check for existing phone number
-                var phoneExists = await _context.Merchants
-                    .AnyAsync(m => m.PhoneNumber == request.PhoneNumber, cancellationToken);
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                PhoneNumber = request.PhoneNumber,
+                Slug = request.Slug,
+                LogoUrl = request.LogoUrl,
+                PasswordHash = PasswordHasher.Hash(request.Password),
+                CreatedAt = DateTime.UtcNow
+            };
 
-                if (phoneExists)
-                    return Result<RegisterMerchantResult>.Failure(ResultErrors.Conflict.EmailAlreadyExists(request.PhoneNumber));
+            _context.Merchants.Add(merchant);
+            await _context.SaveChangesAsync(cancellationToken);
 
-                // Check for existing slug
-                var slugExists = await _context.Merchants
-                    .AnyAsync(m => m.Slug == request.Slug, cancellationToken);
+            var token = _jwt.GenerateToken(merchant.Id, merchant.Name);
 
-                if (slugExists)
-                    return Result<RegisterMerchantResult>.Failure(ResultErrors.Conflict.SlugAlreadyExists(request.Slug));
-
-                // Validate password strength (optional)
-                if (request.Password.Length < 6)
-                    return Result<RegisterMerchantResult>.Failure(ResultErrors.Validation.InvalidValue("password", "must be at least 6 characters long"));
-
-                var merchant = new Merchant
-                {
-                    Id = Guid.NewGuid(),
-                    Name = request.Name,
-                    PhoneNumber = request.PhoneNumber,
-                    Slug = request.Slug,
-                    LogoUrl = request.LogoUrl,
-                    PasswordHash = PasswordHasher.Hash(request.Password),
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _context.Merchants.Add(merchant);
-                await _context.SaveChangesAsync(cancellationToken);
-
-                var token = _jwt.GenerateToken(merchant.Id, merchant.Name);
-
-                var result = new RegisterMerchantResult
-                {
-                    MerchantId = merchant.Id,
-                    Token = token
-                };
-
-                return Result.Success(result);
-            }
-            catch (Exception ex)
+            return new RegisterMerchantResult
             {
-                return Result<RegisterMerchantResult>.Failure(ResultErrors.Server.DatabaseError());
-            }
+                MerchantId = merchant.Id,
+                Token = token
+            };
         }
     }
 

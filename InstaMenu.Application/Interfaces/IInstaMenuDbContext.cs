@@ -7,6 +7,7 @@ namespace InstaMenu.Application.Interfaces
     {
         DbSet<Category> Categories { get; }
         DbSet<MenuItem> MenuItems { get; }
+        DbSet<MenuItemSize> MenuItemSizes { get; }
         DbSet<Merchant> Merchants { get; }
         DbSet<Order> Orders { get; }
         DbSet<MerchantSocialLink> MerchantSocialLinks { get; }
