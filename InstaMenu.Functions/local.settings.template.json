@@ -17,6 +17,8 @@
     "JWT_SECRET": "your-jwt-secret-key-base64",
     "JWT_ISSUER": "InstaMenu",
     "JWT_AUDIENCE": "InstaMenuClient",
-    "JWT_EXPIRES_DAYS": "7"
+    "JWT_EXPIRES_DAYS": "7",
+
+    "AppSettings:BaseUrl": "https://menux.app"
   }
 }

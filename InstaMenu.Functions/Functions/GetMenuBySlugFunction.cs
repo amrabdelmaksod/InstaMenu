@@ -22,7 +22,7 @@ public class GetMenuBySlugFunction
     [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: "application/json", bodyType: typeof(GetMenuBySlugResponse), Description = "Menu retrieved successfully")]
     [OpenApiResponseWithBody(statusCode: HttpStatusCode.NotFound, contentType: "text/plain", bodyType: typeof(string), Description = "Merchant not found")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "menu/{slug}")] HttpRequestData req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "instamenu/{slug}")] HttpRequestData req,
         string slug,
         FunctionContext executionContext)
     {

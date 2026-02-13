@@ -24,11 +24,19 @@ public class GetMenuBySlugQueryHandler : IRequestHandler<GetMenuBySlugQuery, Get
         public async Task<GetMenuBySlugResponse?> Handle(GetMenuBySlugQuery request, CancellationToken cancellationToken)
         {
             var merchant = await _context.Merchants
+                .Include(m => m.Settings)
                 .Include(m => m.Categories)
                     .ThenInclude(c => c.MenuItems)
                 .FirstOrDefaultAsync(m => m.Slug == request.Slug, cancellationToken);
 
             if (merchant == null) return null;
+
+            // Increment menu visits count
+            if (merchant.Settings != null)
+            {
+                merchant.Settings.MenuVisitsCount++;
+                await _context.SaveChangesAsync(cancellationToken);
+            }
 
             return new GetMenuBySlugResponse
             {

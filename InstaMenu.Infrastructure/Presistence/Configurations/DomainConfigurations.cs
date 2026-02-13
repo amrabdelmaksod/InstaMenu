@@ -124,6 +124,9 @@ namespace InstaMenu.Infrastructure.Presistence.Configurations
             builder.Property(x => x.AboutUsAr)
                 .HasMaxLength(2000);
 
+            // QR Code (stored as base64 string)
+            builder.Property(x => x.QRCodeUrl);
+
             builder.Property(x => x.CreatedAt)
                 .IsRequired()
                 .HasDefaultValueSql("NOW()");

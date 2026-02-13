@@ -179,6 +179,13 @@ namespace InstaMenuFunctions.DTOs
         public bool IsClosed { get; set; }
     }
 
+    public class CompleteMerchantSetupRequest
+    {
+        public string Slug { get; set; } = null!;
+        public string WhatsAppNumber { get; set; } = null!;
+        public string Currency { get; set; } = "EGP";
+    }
+
     public class ErrorResponse
     {
         public string Message { get; set; } = null!;

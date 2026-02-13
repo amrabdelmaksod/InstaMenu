@@ -32,7 +32,7 @@ builder.ConfigureServices(services =>
     services.ConfigureFunctionsApplicationInsights();
 
     // Database
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    var connectionString = Environment.GetEnvironmentVariable("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     services.AddDbContext<InstaMenuDbContext>(options =>
         options.UseNpgsql(connectionString));

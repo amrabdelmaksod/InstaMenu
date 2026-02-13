@@ -3,6 +3,7 @@ using System;
 using InstaMenu.Infrastructure.Presistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace InstaMenu.Infrastructure.Migrations
 {
     [DbContext(typeof(InstaMenuDbContext))]
-    partial class InstaMenuDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117211911_AddMenuVisitsCount")]
+    partial class AddMenuVisitsCount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

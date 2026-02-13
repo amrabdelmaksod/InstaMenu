@@ -3,6 +3,7 @@ using System;
 using InstaMenu.Infrastructure.Presistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace InstaMenu.Infrastructure.Migrations
 {
     [DbContext(typeof(InstaMenuDbContext))]
-    partial class InstaMenuDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117210125_update-merchant-settings")]
+    partial class updatemerchantsettings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -279,9 +282,6 @@ namespace InstaMenu.Infrastructure.Migrations
                     b.Property<string>("LogoUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<int>("MenuVisitsCount")
-                        .HasColumnType("integer");
 
                     b.Property<Guid>("MerchantId")
                         .HasColumnType("uuid");

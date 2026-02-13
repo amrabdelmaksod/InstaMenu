@@ -27,6 +27,16 @@
         public string? AboutUs { get; set; }
         public string? AboutUsAr { get; set; }
 
+        // Business Information
+        public string? WhatsAppNumber { get; set; }
+        public string Currency { get; set; } = "EGP";
+
+        // QR Code
+        public string? QRCodeUrl { get; set; }
+
+        // Analytics
+        public int MenuVisitsCount { get; set; } = 0;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsDeleted { get; set; } = false;
